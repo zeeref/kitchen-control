@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Kitchen Relay Control</title>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+<style>
+body{
+  font-family:Arial;
+  text-align:center;
+  margin-top:60px;
+  background:#f4f4f4;
+}
+
+.container{
+  background:white;
+  width:320px;
+  margin:auto;
+  padding:25px;
+  border-radius:10px;
+  box-shadow:0 0 10px rgba(0,0,0,0.2);
+}
+
+button{
+  padding:10px 18px;
+  margin:6px;
+  font-size:15px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+.on{ background:#27ae60; color:white; }
+.off{ background:#e74c3c; color:white; }
+
+.timer{ background:#3498db; color:white; }
+
+.status{
+  margin-top:15px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Kitchen Relay Control</h2>
+
+<button class="on" onclick="sendOn()">Turn ON</button>
+<button class="off" onclick="sendOff()">Turn OFF</button>
+
+<br><br>
+
+<button class="timer" onclick="timer(60)">1 Minute</button>
+<button class="timer" onclick="timer(300)">5 Minutes</button>
+<button class="timer" onclick="timer(900)">15 Minutes</button>
+
+<p class="status">Status: <span id="status">Connecting...</span></p>
+
+</div>
+
+<script>
+
+// MQTT connection
+const client = mqtt.connect(
+'wss://aa9f608950fa44d2b6143e2f967b1fcf.s1.eu.hivemq.cloud:8884/mqtt',
+{
+username:'Sarya',
+password:'12120909@Sarya'
+}
+)
+
+// connected
+client.on('connect',function(){
+console.log("MQTT Connected")
+
+document.getElementById("status").innerText="Connected"
+
+client.subscribe('home/kitchen/relay1/state')
+})
+
+// errors
+client.on('error',function(err){
+console.log("MQTT Error:",err)
+document.getElementById("status").innerText="Connection Error"
+})
+
+// receiving messages
+client.on('message',function(topic,message){
+
+let msg = message.toString()
+
+console.log("Message:",topic,msg)
+
+if(topic==="home/kitchen/relay1/state"){
+document.getElementById("status").innerText = msg
+}
+
+})
+
+// commands
+function sendOn(){
+console.log("Sending ON")
+client.publish('home/kitchen/relay1','ON')
+}
+
+function sendOff(){
+console.log("Sending OFF")
+client.publish('home/kitchen/relay1','OFF')
+}
+
+function timer(sec){
+console.log("Timer:",sec)
+client.publish('home/kitchen/timer',sec.toString())
+}
+
+</script>
+
+</body>
+</html>
