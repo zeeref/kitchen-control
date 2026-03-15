@@ -2,129 +2,118 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Kitchen Control</title>
-
+<title>Kitchen Relay Control</title>
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
 <style>
-
 body{
-font-family:Arial;
-background:#111;
-color:white;
-text-align:center;
+  font-family:Arial;
+  text-align:center;
+  margin-top:60px;
+  background:#f4f4f4;
 }
 
-.kitchen{
-position:relative;
-width:600px;
-margin:auto;
-}
-
-.kitchen img{
-width:100%;
-border-radius:10px;
-}
-
-.device{
-position:absolute;
-cursor:pointer;
-}
-
-.light{
-top:120px;
-left:260px;
-}
-
-.fan{
-top:260px;
-left:180px;
-}
-
-.socket{
-top:340px;
-left:420px;
-}
-
-.timer{
-margin-top:20px;
+.container{
+  background:white;
+  width:320px;
+  margin:auto;
+  padding:25px;
+  border-radius:10px;
+  box-shadow:0 0 10px rgba(0,0,0,0.2);
 }
 
 button{
-padding:10px;
-margin:5px;
-font-size:16px;
+  padding:10px 18px;
+  margin:6px;
+  font-size:15px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
 }
 
-</style>
+.on{ background:#27ae60; color:white; }
+.off{ background:#e74c3c; color:white; }
 
+.timer{ background:#3498db; color:white; }
+
+.status{
+  margin-top:15px;
+  font-weight:bold;
+}
+</style>
 </head>
 
 <body>
 
-<h2>Kitchen Control Panel</h2>
+<div class="container">
 
-<div class="kitchen">
+<h2>Kitchen Relay Control</h2>
 
-<img src="kitchen-top.png">
+<button class="on" onclick="sendOn()">Turn ON</button>
+<button class="off" onclick="sendOff()">Turn OFF</button>
 
-<img src="light.png" class="device light" width="40" onclick="lightToggle()">
+<br><br>
 
-<img src="fan.png" class="device fan" width="40" onclick="fanToggle()">
+<button class="timer" onclick="timer(60)">1 Minute</button>
+<button class="timer" onclick="timer(300)">5 Minutes</button>
+<button class="timer" onclick="timer(900)">15 Minutes</button>
 
-<img src="plug.png" class="device socket" width="40" onclick="socketToggle()">
-
-</div>
-
-<div class="timer">
-
-<h3>Timer</h3>
-
-<button onclick="timer(60)">1 min</button>
-<button onclick="timer(300)">5 min</button>
-<button onclick="timer(900)">15 min</button>
+<p class="status">Status: <span id="status">Connecting...</span></p>
 
 </div>
-
-<p>Status: <span id="status">Connecting...</span></p>
 
 <script>
 
+// MQTT connection
 const client = mqtt.connect(
 'wss://aa9f608950fa44d2b6143e2f967b1fcf.s1.eu.hivemq.cloud:8884/mqtt',
 {
-username:'esp8266',
-password:'relay123'
-})
+username:'Sarya',
+password:'12120909@Sarya'
+}
+)
 
+// connected
 client.on('connect',function(){
+console.log("MQTT Connected")
 
 document.getElementById("status").innerText="Connected"
 
 client.subscribe('home/kitchen/relay1/state')
-
 })
 
+// errors
+client.on('error',function(err){
+console.log("MQTT Error:",err)
+document.getElementById("status").innerText="Connection Error"
+})
+
+// receiving messages
 client.on('message',function(topic,message){
 
-if(topic==="home/kitchen/relay1/state")
-document.getElementById("status").innerText=message.toString()
+let msg = message.toString()
+
+console.log("Message:",topic,msg)
+
+if(topic==="home/kitchen/relay1/state"){
+document.getElementById("status").innerText = msg
+}
 
 })
 
-function lightToggle(){
+// commands
+function sendOn(){
+console.log("Sending ON")
 client.publish('home/kitchen/relay1','ON')
 }
 
-function fanToggle(){
-client.publish('home/kitchen/relay2','ON')
-}
-
-function socketToggle(){
-client.publish('home/kitchen/relay3','ON')
+function sendOff(){
+console.log("Sending OFF")
+client.publish('home/kitchen/relay1','OFF')
 }
 
 function timer(sec){
+console.log("Timer:",sec)
 client.publish('home/kitchen/timer',sec.toString())
 }
 
